@@ -1,0 +1,124 @@
+<<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F5 Taximeter</title>
+    <style>
+        :root {
+            --bg: #f4f4f9;
+            --card: #ffffff;
+            --primary: #2563eb;
+            --stop: #dc2626;
+            --move: #16a34a;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: var(--card); padding: 2rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        h1 { color: #1e293b; margin-bottom: 1.5rem; }
+        .display { background: #1e293b; color: #fbbf24; padding: 1.5rem; border-radius: 8px; font-family: monospace; margin-bottom: 1.5rem; }
+        .fare { font-size: 2.5rem; font-weight: bold; }
+        .stats { font-size: 0.9rem; margin-top: 10px; display: flex; justify-content: space-around; color: #94a3b8; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-start { background: var(--primary); color: white; grid-column: span 2; }
+        .btn-stop { background: var(--stop); color: white; }
+        .btn-move { background: var(--move); color: white; }
+        .btn-finish { background: #4b5563; color: white; grid-column: span 2; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 1rem; background: #e2e8f0; color: #475569; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚖 F5 Taximeter</h1>
+    <div id="status" class="status-badge">Esperando...</div>
+    
+    <div class="display">
+        <div class="fare">€<span id="total-fare">0.00</span></div>
+        <div class="stats">
+            <span>Parado: <span id="time-stopped">0</span>s</span>
+            <span>En marcha: <span id="time-moving">0</span>s</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="start-btn" class="btn-start" onclick="startTrip()">INICIAR VIAJE</button>
+        <button id="stop-btn" class="btn-stop" onclick="changeState('stopped')" disabled>PARAR</button>
+        <button id="move-btn" class="btn-move" onclick="changeState('moving')" disabled>MOVER</button>
+        <button id="finish-btn" class="btn-finish" onclick="finishTrip()" disabled>FINALIZAR Y COBRAR</button>
+    </div>
+</div>
+
+<script>
+    let tripActive = false;
+    let state = null;
+    let lastTimestamp = 0;
+    let timerInterval = null;
+
+    // Función para enviar comandos a Python (taximetro.py)
+    async function enviarAPython(accion) {
+        const response = await fetch('/comando', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ accion: accion })
+        });
+        return await response.json();
+    }
+
+    async function startTrip() {
+        await enviarAPython('start');
+        tripActive = true;
+        state = 'stopped';
+        lastTimestamp = Date.now();
+        document.getElementById('status').innerText = "Estado: Parado";
+        document.getElementById('status').style.background = "#fee2e2";
+        toggleButtons(true);
+        timerInterval = setInterval(updateCalculations, 100);
+    }
+
+    async function changeState(newState) {
+        const cmd = (newState === 'stopped') ? 'stop' : 'move';
+        await enviarAPython(cmd);
+        state = newState;
+        document.getElementById('status').innerText = (newState === 'stopped') ? "Estado: Parado" : "Estado: En marcha";
+        document.getElementById('status').style.background = (newState === 'stopped') ? "#fee2e2" : "#dcfce7";
+    }
+
+    async function finishTrip() {
+        clearInterval(timerInterval);
+        const datos = await enviarAPython('finish');
+        
+        alert(`VIAJE FINALIZADO\n\nTotal: €${datos.total}\nTiempo parado: ${datos.parado}s\nTiempo marcha: ${datos.movimiento}s`);
+        
+        // Reiniciar todo
+        location.reload();
+    }
+
+    function updateCalculations() {
+        if (!tripActive) return;
+        const now = Date.now();
+        const delta = (now - lastTimestamp) / 1000;
+        
+        let fareActual = parseFloat(document.getElementById('total-fare').innerText);
+        if (state === 'stopped') {
+            fareActual += delta * 0.02;
+            document.getElementById('time-stopped').innerText = Math.floor(parseFloat(document.getElementById('time-stopped').innerText) + delta);
+        } else {
+            fareActual += delta * 0.05;
+            document.getElementById('time-moving').innerText = Math.floor(parseFloat(document.getElementById('time-moving').innerText) + delta);
+        }
+        document.getElementById('total-fare').innerText = fareActual.toFixed(2);
+        lastTimestamp = now;
+    }
+
+    function toggleButtons(active) {
+        document.getElementById('start-btn').disabled = active;
+        document.getElementById('stop-btn').disabled = !active;
+        document.getElementById('move-btn').disabled = !active;
+        document.getElementById('finish-btn').disabled = !active;
+    }
+</script>
+
+</body>
+</html>
