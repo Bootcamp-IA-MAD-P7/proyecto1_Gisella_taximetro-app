@@ -1,0 +1,31 @@
+13-May-26 13:41:07 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+13-May-26 13:41:07 - [33mPress CTRL+C to quit[0m
+13-May-26 13:41:07 -  * Restarting with stat
+13-May-26 13:41:07 -  * Debugger is active!
+13-May-26 13:41:07 -  * Debugger PIN: 129-140-514
+13-May-26 13:41:51 - 127.0.0.1 - - [13/May/2026 13:41:51] "GET / HTTP/1.1" 200 -
+13-May-26 13:42:00 - 127.0.0.1 - - [13/May/2026 13:42:00] "GET / HTTP/1.1" 200 -
+13-May-26 13:42:32 - Viaje iniciado
+13-May-26 13:42:32 - 127.0.0.1 - - [13/May/2026 13:42:32] "POST /comando HTTP/1.1" 200 -
+13-May-26 13:42:40 - Taxi en movimiento
+13-May-26 13:42:40 - 127.0.0.1 - - [13/May/2026 13:42:40] "POST /comando HTTP/1.1" 200 -
+13-May-26 13:42:50 - Taxi parado
+13-May-26 13:42:50 - 127.0.0.1 - - [13/May/2026 13:42:50] "POST /comando HTTP/1.1" 200 -
+13-May-26 13:43:03 - Viaje finalizado. Total: 0.95€ | Parado: 20.2s | Movimiento: 10.9s
+13-May-26 13:43:03 - 127.0.0.1 - - [13/May/2026 13:43:03] "POST /comando HTTP/1.1" 200 -
+13-May-26 13:43:10 - 127.0.0.1 - - [13/May/2026 13:43:10] "GET / HTTP/1.1" 200 -
+13-May-26 13:52:01 -  * Detected change in 'C:\\Users\\Usuario\\proyecto1_Gisella_taximetro-app\\test_taximetro.py', reloading
+13-May-26 13:52:01 -  * Restarting with stat
+13-May-26 13:52:02 -  * Debugger is active!
+13-May-26 13:52:02 -  * Debugger PIN: 129-140-514
+13-May-26 13:52:05 -  * Detected change in 'C:\\Users\\Usuario\\proyecto1_Gisella_taximetro-app\\test_taximetro.py', reloading
+13-May-26 13:52:05 -  * Restarting with stat
+13-May-26 13:52:06 -  * Debugger is active!
+13-May-26 13:52:06 -  * Debugger PIN: 129-140-514
+13-May-26 14:01:15 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+13-May-26 14:01:15 - [33mPress CTRL+C to quit[0m
+13-May-26 14:01:15 -  * Restarting with stat
+13-May-26 14:01:16 -  * Debugger is active!
+13-May-26 14:01:16 -  * Debugger PIN: 129-140-514

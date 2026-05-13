@@ -1,12 +1,20 @@
 from flask import Flask, render_template, request, jsonify
 import time
+import logging # Para el Nivel Medio
 
 app = Flask(__name__)
 
-# --- ESTADO DEL TAXÍMETRO (Sustituye la lógica del input) ---
+# CONFIGURACIÓN DE LOGS (Nivel Medio)
+logging.basicConfig(filename='taximetro.log', level=logging.INFO, 
+                    format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
+# CONFIGURACIÓN DE PRECIOS (Nivel Medio - Permite cambiarlos aquí)
+PRECIO_PARADO = 0.02
+PRECIO_MOVIMIENTO = 0.05
+
 taxi_data = {
     "activo": False,
-    "estado": "parado", # 'parado' o 'movimiento'
+    "estado": "parado",
     "tiempo_parado": 0,
     "tiempo_movimiento": 0,
     "ultima_marca_tiempo": 0
@@ -14,7 +22,6 @@ taxi_data = {
 
 @app.route('/')
 def index():
-    # Esta función busca el archivo index.html en la carpeta 'templates'
     return render_template('index.html')
 
 @app.route('/comando', methods=['POST'])
@@ -22,19 +29,13 @@ def comando():
     accion = request.json.get('accion')
     ahora = time.time()
     
-    # 1. INICIAR TRAYECTO (Nivel Esencial)
     if accion == 'start':
-        taxi_data["activo"] = True
-        taxi_data["estado"] = "parado"
-        taxi_data["tiempo_parado"] = 0
-        taxi_data["tiempo_movimiento"] = 0
-        taxi_data["ultima_marca_tiempo"] = ahora
-        return jsonify({"status": "viaje_iniciado", "estado": "parado"})
+        taxi_data.update({"activo": True, "estado": "parado", "tiempo_parado": 0, "tiempo_movimiento": 0, "ultima_marca_tiempo": ahora})
+        logging.info("Viaje iniciado")
+        return jsonify({"status": "viaje_iniciado"})
 
     if taxi_data["activo"]:
-        # Calcular cuánto tiempo pasó desde el último botón pulsado
         duracion = ahora - taxi_data["ultima_marca_tiempo"]
-        
         if taxi_data["estado"] == "parado":
             taxi_data["tiempo_parado"] += duracion
         else:
@@ -42,27 +43,30 @@ def comando():
         
         taxi_data["ultima_marca_tiempo"] = ahora
 
-        # 2. CAMBIAR ESTADOS (Stop / Move)
         if accion == 'stop':
             taxi_data["estado"] = "parado"
+            logging.info("Taxi parado")
         elif accion == 'move':
             taxi_data["estado"] = "movimiento"
-            
-        # 3. FINALIZAR (Cálculo de tarifa Nivel Esencial)
+            logging.info("Taxi en movimiento")
         elif accion == 'finish':
-            # 2 céntimos parado, 5 céntimos movimiento
-            total = (taxi_data["tiempo_parado"] * 0.02) + (taxi_data["tiempo_movimiento"] * 0.05)
+            total = (taxi_data["tiempo_parado"] * PRECIO_PARADO) + (taxi_data["tiempo_movimiento"] * PRECIO_MOVIMIENTO)
             taxi_data["activo"] = False
             
-            resumen = {
+            # GUARDAR EN HISTORIAL (Nivel Medio)
+            resultado = f"Total: {round(total, 2)}€ | Parado: {round(taxi_data['tiempo_parado'], 1)}s | Movimiento: {round(taxi_data['tiempo_movimiento'], 1)}s"
+            with open("historial_trayectos.txt", "a") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {resultado}\n")
+            
+            logging.info(f"Viaje finalizado. {resultado}")
+
+            return jsonify({
                 "total": round(total, 2),
                 "parado": round(taxi_data["tiempo_parado"], 1),
                 "movimiento": round(taxi_data["tiempo_movimiento"], 1)
-            }
-            return jsonify(resumen)
+            })
 
     return jsonify({"estado_actual": taxi_data["estado"]})
 
 if __name__ == '__main__':
-    # Esto arranca el servidor web
     app.run(debug=True)
